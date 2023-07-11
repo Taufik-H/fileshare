@@ -4,7 +4,8 @@ import 'filepond/dist/filepond.min.css';
 import FilePondPluginImageExifOrientation from 'filepond-plugin-image-exif-orientation';
 import FilePondPluginImagePreview from 'filepond-plugin-image-preview';
 import 'filepond-plugin-image-preview/dist/filepond-plugin-image-preview.css';
-import { RiDownloadCloud2Line } from 'react-icons/ri';
+import { motion } from 'framer-motion';
+import { HiOutlineClipboard, HiOutlineClipboardCheck } from 'react-icons/hi';
 
 registerPlugin(FilePondPluginImageExifOrientation, FilePondPluginImagePreview);
 
@@ -12,7 +13,7 @@ registerPlugin(FilePondPluginImageExifOrientation, FilePondPluginImagePreview);
 function App() {
   const [files, setFiles] = useState([]);
   const [uploadedFiles, setUploadedFiles] = useState([]);
-
+  const [copyStatus, setCopyStatus] = useState({});
   const handleFileUpload = async () => {
     setFiles([]);
 
@@ -28,7 +29,21 @@ function App() {
       console.error('Error fetching uploaded files:', error.message);
     }
   };
-
+  const handleCopyLink = (file) => {
+    const downloadLink = `http://localhost:5000/download/${file.name}`;
+    navigator.clipboard
+      .writeText(downloadLink)
+      .then(() => {
+        console.log('Link copied to clipboard:', downloadLink);
+        setCopyStatus({ [file.name]: true });
+        setTimeout(() => {
+          setCopyStatus({ [file.name]: false });
+        }, 3000);
+      })
+      .catch((error) => {
+        console.error('Failed to copy link:', error);
+      });
+  };
   return (
     <div>
       {/* Hero */}
@@ -114,35 +129,51 @@ function App() {
               onprocessfile={() => handleFileUpload()}
             />
             {/* Short Link Form */}
-            <div className="max-w-3xl mx-auto mt-8">
-              <form>
-                <div className="relative z-10 flex space-x-2 p-2  bg-white border rounded-lg shadow-lg shadow-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:shadow-gray-900/[.2]">
-                  <div class="flex-[1_0_0%]">
-                    <label
-                      for="hs-search-article-1"
-                      class="block text-sm text-gray-700 font-medium dark:text-white"
-                    >
-                      <span class="sr-only">Short link</span>
-                    </label>
-                    <input
-                      type="text"
-                      name="hs-search-article-1"
-                      id="hs-search-article-1"
-                      className="p-2 block w-full border-none focus:outline-none rounded-md ring-3  dark:text-gray-400"
-                      placeholder="Short link"
-                    />
-                  </div>
-                  <div className="flex-[0_0_auto]">
-                    <a
-                      className="p-2 inline-flex justify-center items-center gap-2 rounded-md border border-transparent font-semibold bg-blue-500 text-white hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all text-sm dark:focus:ring-offset-gray-800"
-                      href="#"
-                    >
-                      Shorten
-                    </a>
-                  </div>
+          </div>
+          <div className="flex gap-3 w-full flex-wrap justify-center mx-auto mt-8">
+            {/* input link utama */}
+            <form className="w-full  md:w-5/12 lg:w-3/12">
+              <div className="relative z-10 flex space-x-2 p-2  bg-white border rounded-lg shadow-lg shadow-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:shadow-gray-900/[.2]">
+                <div className="flex-[1_0_0%]">
+                  <label className="block text-sm text-gray-700 font-medium dark:text-white">
+                    <span className="sr-only">Short link</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="hs-search-article-1"
+                    id="hs-search-article-1"
+                    className="p-2 block w-full border-none focus:outline-none rounded-md ring-3  dark:text-gray-400"
+                    placeholder="Link utama"
+                  />
                 </div>
-              </form>
-            </div>
+              </div>
+            </form>
+
+            {/* input short link */}
+            <form className="w-full  md:w-5/12 lg:w-3/12">
+              <div className="relative z-10 flex space-x-2 p-2  bg-white border rounded-lg shadow-lg shadow-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:shadow-gray-900/[.2]">
+                <div className="flex-[1_0_0%]">
+                  <label className="block text-sm text-gray-700 font-medium dark:text-white">
+                    <span className="sr-only">Short link</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="hs-search-article-1"
+                    id="hs-search-article-1"
+                    className="p-2 block w-full border-none focus:outline-none rounded-md ring-3  dark:text-gray-400"
+                    placeholder="Short link"
+                  />
+                </div>
+                <div className="flex-[0_0_auto]">
+                  <a
+                    className="p-2 inline-flex justify-center items-center gap-2 rounded-md border border-transparent font-semibold bg-blue-500 text-white hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all text-sm dark:focus:ring-offset-gray-800"
+                    href="#"
+                  >
+                    Shorten
+                  </a>
+                </div>
+              </div>
+            </form>
           </div>
 
           {/* End Buttons */}
@@ -156,14 +187,37 @@ function App() {
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {/* Uploaded Files */}
           {uploadedFiles.map((file, index) => (
-            <a
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0 }}
+              transition={{ duration: 0.3 }}
+              whileTap={{ scale: 0.9, transition: { duration: 0.1 } }}
               key={index}
               className="group flex flex-col bg-white border shadow-sm rounded-xl hover:shadow-md transition dark:bg-slate-900 dark:border-gray-800"
-              href={`http://localhost:5000/download/${file.name}`}
+              onClick={() => handleCopyLink(file)}
             >
               <div className="p-4 md:p-5">
                 <div className="flex items-start">
-                  <RiDownloadCloud2Line size={20} className="mt-1" />
+                  {copyStatus[file.name] ? (
+                    <>
+                      <div className="relative">
+                        <HiOutlineClipboardCheck
+                          size={20}
+                          className="mt-1 text-green-500"
+                        />
+                        <motion.div
+                          initial={{ opacity: 0, y: 0 }}
+                          animate={{ opacity: 1, y: -5, scale: 1.2 }}
+                          className="ml-2 px-2 py-1 rounded-md -top-5 -left-5 text-white bg-green-500 shadow-md absolute text-xs "
+                        >
+                          Copied
+                        </motion.div>
+                      </div>
+                    </>
+                  ) : (
+                    <HiOutlineClipboard size={20} className="mt-1" />
+                  )}
 
                   <div className="grow ml-5">
                     <h3 className="group-hover:text-blue-600 font-semibold text-gray-800 dark:group-hover:text-gray-400 dark:text-gray-200">
@@ -175,7 +229,7 @@ function App() {
                   </div>
                 </div>
               </div>
-            </a>
+            </motion.div>
           ))}
           {/* End Uploaded Files */}
         </div>
