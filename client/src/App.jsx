@@ -24,6 +24,7 @@ function App() {
   const [generatedRoomNumber, setGeneratedRoomNumber] = useState('');
   const [roomNumber, setRoomNumber] = useState('');
   const [joinRoomOpen, setJoinRoomOpen] = useState(false);
+  const [downloadAllText, setsetDownloadAllText] = useState('Download All');
 
   console.log('room number:' + roomNumber);
   console.log('generated number' + generatedRoomNumber);
@@ -126,7 +127,10 @@ function App() {
         setCopyStatus(true);
         setTimeout(() => {
           setCopyStatus(false);
+          setsetDownloadAllText('Download All');
         }, 3000);
+
+        setsetDownloadAllText('Link Copied');
       })
       .catch((error) => {
         console.error('Failed to copy link:', error);
@@ -311,13 +315,21 @@ function App() {
 
       {/* Card Section */}
       <div className="max-w-5xl px-4 py-10 sm:px-6 lg:px-8 lg:py-14 mx-auto">
-        <button
-          type="button"
-          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-500 rounded-md hover:bg-blue-600 focus:outline-none focus:bg-blue-600"
-          onClick={handleDownloadAll}
-        >
-          {copyStatus ? 'Link Copied!' : 'Download All'}
-        </button>
+        {uploadedFiles.length >= 2 && (
+          <motion.button
+            type="button"
+            className="inline-flex mb-4 justify-center items-center gap-x-3 text-center bg-gradient-to-tl from-blue-600 to-violet-600 hover:from-violet-600 hover:to-blue-600 border border-transparent text-white text-sm font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 focus:ring-offset-white py-3 px-4 dark:focus:ring-offset-gray-800"
+            onClick={handleDownloadAll}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            {downloadAllText}
+            <HiFolderDownload />
+          </motion.button>
+        )}
         {/* Grid */}
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {/* Uploaded Files */}
