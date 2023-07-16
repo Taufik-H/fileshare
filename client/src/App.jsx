@@ -184,7 +184,7 @@ function App() {
 
           <div className="mt-5 max-w-3xl text-center mx-auto">
             <p className="text-lg text-slate-600 dark:text-gray-400">
-              Nama Website is a FileShare website, that can transfer your files
+              AeroDrop is a FileShare website, that can transfer your files
               rapidly.
             </p>
           </div>
@@ -262,9 +262,9 @@ function App() {
 
             {/* Short Link Form */}
           </div>
-          <div className="flex gap-3 w-full flex-wrap justify-center mx-auto mt-8">
-            {/* input link utama */}
-            <form className="w-full  md:w-5/12 lg:w-3/12">
+          {/* <div className="flex gap-3 w-full flex-wrap justify-center mx-auto mt-8"> */}
+          {/* input link utama */}
+          {/* <form className="w-full  md:w-5/12 lg:w-3/12">
               <div className="relative z-10 flex space-x-2 p-2  bg-white border rounded-lg shadow-lg shadow-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:shadow-gray-900/[.2]">
                 <div className="flex-[1_0_0%]">
                   <label className="block text-sm text-gray-700 font-medium dark:text-white">
@@ -279,10 +279,10 @@ function App() {
                   />
                 </div>
               </div>
-            </form>
+            </form> */}
 
-            {/* input short link */}
-            <div className="w-full  md:w-5/12 lg:w-3/12">
+          {/* input short link */}
+          {/* <div className="w-full  md:w-5/12 lg:w-3/12">
               <div className="relative z-10 flex space-x-2 p-2 justify-between  bg-white border rounded-lg shadow-lg shadow-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:shadow-gray-900/[.2]">
                 <div className="flex items-center">
                   <p className="p-2 pr-0 text-slate-500 font-semibold">
@@ -306,7 +306,7 @@ function App() {
                 </div>
               </div>
             </div>
-          </div>
+          </div> */}
 
           {/* End Buttons */}
         </div>
