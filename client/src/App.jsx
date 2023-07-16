@@ -5,7 +5,11 @@ import FilePondPluginImageExifOrientation from 'filepond-plugin-image-exif-orien
 import FilePondPluginImagePreview from 'filepond-plugin-image-preview';
 import 'filepond-plugin-image-preview/dist/filepond-plugin-image-preview.css';
 import { motion } from 'framer-motion';
-import { HiOutlineClipboard, HiOutlineClipboardCheck } from 'react-icons/hi';
+import {
+  HiFolderDownload,
+  HiOutlineClipboard,
+  HiOutlineClipboardCheck,
+} from 'react-icons/hi';
 import { FcHome } from 'react-icons/fc';
 import Modal from './components/Modal';
 import JoinRoom from './components/JoinRoom';
@@ -107,6 +111,21 @@ function App() {
         setCopyStatus({ [file.name]: true });
         setTimeout(() => {
           setCopyStatus({ [file.name]: false });
+        }, 3000);
+      })
+      .catch((error) => {
+        console.error('Failed to copy link:', error);
+      });
+  };
+  const handleDownloadAll = () => {
+    const downloadLink = `http://localhost:5000/downloadAll/${generatedRoomNumber}`;
+    navigator.clipboard
+      .writeText(downloadLink)
+      .then(() => {
+        console.log('Link copied to clipboard:', downloadLink);
+        setCopyStatus(true);
+        setTimeout(() => {
+          setCopyStatus(false);
         }, 3000);
       })
       .catch((error) => {
@@ -292,6 +311,13 @@ function App() {
 
       {/* Card Section */}
       <div className="max-w-5xl px-4 py-10 sm:px-6 lg:px-8 lg:py-14 mx-auto">
+        <button
+          type="button"
+          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-500 rounded-md hover:bg-blue-600 focus:outline-none focus:bg-blue-600"
+          onClick={handleDownloadAll}
+        >
+          {copyStatus ? 'Link Copied!' : 'Download All'}
+        </button>
         {/* Grid */}
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {/* Uploaded Files */}

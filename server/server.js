@@ -1,6 +1,7 @@
 const express = require('express');
 const multer = require('multer');
 const cors = require('cors');
+const archiver = require('archiver');
 const path = require('path');
 const fs = require('fs');
 
@@ -91,6 +92,65 @@ app.get('/download/:roomNumber/:filename', (req, res) => {
   }
 });
 
+app.get('/downloadAll/:roomNumber', (req, res) => {
+  const roomNumber = req.params.roomNumber;
+  const folderPath = path.join(__dirname, 'uploads', roomNumber);
+
+  // Check if the folder exists
+  const folderExists = fs.existsSync(folderPath);
+  if (!folderExists) {
+    return res.status(404).json({ error: 'Folder not found' });
+  }
+
+  const zipPath = path.join(
+    __dirname,
+    'public',
+    'downloads',
+    `${roomNumber}.zip`
+  );
+
+  const output = fs.createWriteStream(zipPath);
+  const archive = archiver('zip', {
+    zlib: { level: 9 }, // set compression level
+  });
+
+  archive.on('warning', (err) => {
+    console.warn(err);
+  });
+
+  archive.on('error', (err) => {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to create zip file' });
+  });
+
+  // Pipe archive data to the output file
+  archive.pipe(output);
+
+  // Add all files in the folder to the archive
+  archive.directory(folderPath, false);
+
+  // Finalize the archive and close the output stream
+  archive.finalize();
+
+  output.on('close', () => {
+    console.log('Zip file created:', zipPath);
+    res.download(zipPath, `${roomNumber}.zip`, (err) => {
+      if (err) {
+        console.error('Error downloading zip file:', err);
+        res.status(500).json({ error: 'Failed to download zip file' });
+      } else {
+        // Cleanup: remove the generated zip file
+        fs.unlink(zipPath, (err) => {
+          if (err) {
+            console.warn('Failed to remove zip file:', err);
+          } else {
+            console.log('Zip file removed:', zipPath);
+          }
+        });
+      }
+    });
+  });
+});
 const PORT = 5000;
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
