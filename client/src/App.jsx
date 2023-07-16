@@ -259,7 +259,7 @@ function App() {
             </form>
 
             {/* input short link */}
-            <form className="w-full  md:w-5/12 lg:w-3/12">
+            <div className="w-full  md:w-5/12 lg:w-3/12">
               <div className="relative z-10 flex space-x-2 p-2 justify-between  bg-white border rounded-lg shadow-lg shadow-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:shadow-gray-900/[.2]">
                 <div className="flex items-center">
                   <p className="p-2 pr-0 text-slate-500 font-semibold">
@@ -282,7 +282,7 @@ function App() {
                   </a>
                 </div>
               </div>
-            </form>
+            </div>
           </div>
 
           {/* End Buttons */}
