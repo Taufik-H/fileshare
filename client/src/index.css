@@ -39,7 +39,7 @@
 
 /* the background color of the drop circle */
 .filepond--drip-blob {
-  background-color: #999;
+  background-color: #0400ff;
 }
 
 /* the background color of the black action buttons */
@@ -76,5 +76,6 @@
 /* bordered drop area */
 .filepond--panel-root {
   background-color: white;
+
   border: 2px dotted #0099ff;
 }

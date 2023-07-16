@@ -6,75 +6,85 @@ const fs = require('fs');
 
 const app = express();
 const storage = multer.diskStorage({
-  destination: 'uploads/',
-  filename: function (req, file, cb) {
-    // Extract the file extension
-    const ext = path.extname(file.originalname);
-    // Generate a unique filename with the original extension
-    const uniqueFilename = `${Date.now()}${ext}`;
-    cb(null, uniqueFilename);
+  destination: (req, file, cb) => {
+    const roomNumber = req.params.roomNumber;
+    const destinationFolder = path.join(__dirname, 'uploads', roomNumber);
+    fs.mkdirSync(destinationFolder, { recursive: true });
+    cb(null, destinationFolder);
+  },
+  filename: (req, file, cb) => {
+    const originalName = file.originalname;
+    const modifiedName = originalName.toLowerCase().replaceAll(' ', '_');
+    cb(null, modifiedName);
   },
 });
 const upload = multer({ storage });
 
-// Configure CORS
 app.use(cors());
-
-// Serve static files
 app.use(express.static('public'));
 
-// Handle file uploads
-app.post('/uploads', upload.array('files'), (req, res) => {
-  // Access the uploaded files using req.files array
-  console.log(req.files);
+app.post('/createRoom/:roomNumber', (req, res) => {
+  const roomNumber = req.params.roomNumber;
+  const folderPath = path.join(__dirname, 'uploads', roomNumber);
 
-  // Perform additional processing or file validation as needed
-
-  // Send a response indicating successful upload
-  res.status(200).json({ message: 'Files uploaded successfully' });
+  if (!fs.existsSync(folderPath)) {
+    fs.mkdirSync(folderPath);
+    res.status(200).json({ message: 'Room and folder created successfully' });
+  } else {
+    res.status(409).json({ error: 'Room already exists' });
+  }
 });
 
-// Retrieve uploaded file data
-app.get('/getUploadedFiles', (req, res) => {
-  // Get the list of uploaded files from the 'uploads' directory
-  const directoryPath = path.join(__dirname, 'uploads');
+app.post('/uploads/:roomNumber', upload.array('files'), (req, res) => {
+  const roomNumber = req.params.roomNumber;
+  const files = req.files.map((file) => {
+    const originalName = file.originalname;
+    const modifiedName = originalName.toLowerCase().replaceAll(' ', '_');
+    return {
+      name: modifiedName,
+      size: file.size,
+      type: path
+        .extname(file.originalname)
+        .toLocaleLowerCase()
+        .replace('.', ''),
+    };
+  });
+  res.status(200).json({ files: files });
+});
+
+app.get('/getUploadedFiles/:roomNumber', (req, res) => {
+  const roomNumber = req.params.roomNumber;
+  const directoryPath = path.join(__dirname, 'uploads', roomNumber);
 
   fs.readdir(directoryPath, (err, files) => {
     if (err) {
       console.error('Error reading directory:', err);
       res.status(500).json({ error: 'Failed to retrieve uploaded files' });
     } else {
-      // Create an array to hold the file data
-      const uploadedFiles = [];
-
-      // Iterate through the files and collect the required information
-      files.forEach((file) => {
+      const uploadedFiles = files.map((file) => {
         const filePath = path.join(directoryPath, file);
         const { size } = fs.statSync(filePath);
-        const fileData = {
+        return {
           name: file,
           size: size,
           type: path.extname(file).replace('.', ''),
         };
-        uploadedFiles.push(fileData);
       });
-
-      // Send the array of uploaded file data as the response
       res.status(200).json({ files: uploadedFiles });
     }
   });
 });
 
-app.get('/download/:filename', (req, res) => {
+app.get('/download/:roomNumber/:filename', (req, res) => {
+  const roomNumber = req.params.roomNumber;
   const filename = req.params.filename;
-  const filePath = path.join(__dirname, 'uploads', filename);
+  const filePath = path.join(__dirname, 'uploads', roomNumber, filename);
 
   if (fs.existsSync(filePath)) {
     res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
     res.setHeader('Content-Type', 'application/octet-stream');
 
     const fileStream = fs.createReadStream(filePath);
-    console.log(filePath);
     fileStream.pipe(res);
   } else {
     res.status(404).json({ error: 'File not found' });
