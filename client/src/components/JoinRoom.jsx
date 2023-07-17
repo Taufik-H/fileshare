@@ -34,6 +34,7 @@ function JoinRoom({ onClose, onJoin }) {
           <div className="relative z-10 w-full flex space-x-3 p-3 bg-white border rounded-lg shadow-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:shadow-gray-900/[.2]">
             <div className="flex-1">
               <input
+                required
                 type="text"
                 name="join-room-input"
                 id="join-room-input"

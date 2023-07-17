@@ -51,6 +51,7 @@ app.post('/uploads/:roomNumber', upload.array('files'), (req, res) => {
     };
   });
   res.status(200).json({ files: files });
+  scheduleFolderDeletion(roomNumber);
 });
 
 app.get('/getUploadedFiles/:roomNumber', (req, res) => {
@@ -151,6 +152,38 @@ app.get('/downloadAll/:roomNumber', (req, res) => {
     });
   });
 });
+
+// New route to handle automatic deletion after 6 hours
+app.delete('/deleteRoom/:roomNumber', (req, res) => {
+  const roomNumber = req.params.roomNumber;
+  const folderPath = path.join(__dirname, 'uploads', roomNumber);
+
+  fs.rmdir(folderPath, { recursive: true }, (err) => {
+    if (err) {
+      console.error('Error deleting room folder:', err);
+      res.status(500).json({ error: 'Failed to delete room folder' });
+    } else {
+      console.log('Room folder deleted:', folderPath);
+      res.status(200).json({ message: 'Room folder deleted successfully' });
+    }
+  });
+});
+
+const SIX_HOURS = 6 * 60 * 60 * 1000; // 6 hours in milliseconds
+
+// Function to delete room folder after 6 hours
+const scheduleFolderDeletion = (roomNumber) => {
+  setTimeout(() => {
+    const folderPath = path.join(__dirname, 'uploads', roomNumber);
+    fs.rmdir(folderPath, { recursive: true }, (err) => {
+      if (err) {
+        console.error('Error deleting room folder:', err);
+      } else {
+        console.log('Room folder deleted:', folderPath);
+      }
+    });
+  }, SIX_HOURS);
+};
 const PORT = 5000;
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);

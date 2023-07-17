@@ -1,15 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { FilePond, registerPlugin } from 'react-filepond';
 import 'filepond/dist/filepond.min.css';
 import FilePondPluginImageExifOrientation from 'filepond-plugin-image-exif-orientation';
 import FilePondPluginImagePreview from 'filepond-plugin-image-preview';
 import 'filepond-plugin-image-preview/dist/filepond-plugin-image-preview.css';
 import { motion } from 'framer-motion';
+import { HiFolderDownload } from 'react-icons/hi';
 import {
-  HiFolderDownload,
-  HiOutlineClipboard,
-  HiOutlineClipboardCheck,
-} from 'react-icons/hi';
+  BsCloudArrowDown,
+  BsCloudCheckFill,
+  BsCheckCircle,
+  BsXCircle,
+} from 'react-icons/bs';
 import { FcHome } from 'react-icons/fc';
 import Modal from './components/Modal';
 import JoinRoom from './components/JoinRoom';
@@ -25,9 +27,10 @@ function App() {
   const [roomNumber, setRoomNumber] = useState('');
   const [joinRoomOpen, setJoinRoomOpen] = useState(false);
   const [downloadAllText, setsetDownloadAllText] = useState('Download All');
+  const [deletingFile, setDeletingFile] = useState(null);
 
-  console.log('room number:' + roomNumber);
-  console.log('generated number' + generatedRoomNumber);
+  // console.log('room number:' + roomNumber);
+  // console.log('generated number' + generatedRoomNumber);
   const handleShowModal = () => {
     const generatedNumber = Math.floor(
       10000 + Math.random() * 90000
@@ -103,39 +106,50 @@ function App() {
     }
   };
 
-  const handleCopyLink = (file) => {
-    const downloadLink = `http://localhost:5000/download/${generatedRoomNumber}/${file.name}`;
-    navigator.clipboard
-      .writeText(downloadLink)
-      .then(() => {
-        console.log('Link copied to clipboard:', downloadLink);
-        setCopyStatus({ [file.name]: true });
-        setTimeout(() => {
-          setCopyStatus({ [file.name]: false });
-        }, 3000);
-      })
-      .catch((error) => {
-        console.error('Failed to copy link:', error);
-      });
-  };
+  const hiddenDownloadLinkRef = useRef(null);
+
   const handleDownloadAll = () => {
     const downloadLink = `http://localhost:5000/downloadAll/${generatedRoomNumber}`;
-    navigator.clipboard
-      .writeText(downloadLink)
-      .then(() => {
-        console.log('Link copied to clipboard:', downloadLink);
-        setCopyStatus(true);
-        setTimeout(() => {
-          setCopyStatus(false);
-          setsetDownloadAllText('Download All');
-        }, 3000);
+    setsetDownloadAllText('Downloading...');
 
-        setsetDownloadAllText('Link Copied');
-      })
-      .catch((error) => {
-        console.error('Failed to copy link:', error);
-      });
+    const downloadAllLink = document.createElement('a');
+    downloadAllLink.href = downloadLink;
+    downloadAllLink.download = 'all_files.zip';
+    hiddenDownloadLinkRef.current = downloadAllLink;
+
+    document.body.appendChild(downloadAllLink);
+    downloadAllLink.click();
+    document.body.removeChild(downloadAllLink);
+
+    setTimeout(() => {
+      setsetDownloadAllText('Download All');
+    }, 3000);
   };
+
+  const handleDownload = (file) => {
+    const downloadLink = `http://localhost:5000/download/${generatedRoomNumber}/${file.name}`;
+
+    setCopyStatus((prevCopyStatus) => ({
+      ...prevCopyStatus,
+      [file.name]: true,
+    }));
+
+    const tempLink = document.createElement('a');
+    tempLink.href = downloadLink;
+    tempLink.setAttribute('download', file.name);
+    tempLink.setAttribute('style', 'display: none');
+    document.body.appendChild(tempLink);
+    tempLink.click();
+    document.body.removeChild(tempLink);
+
+    setTimeout(() => {
+      setCopyStatus((prevCopyStatus) => ({
+        ...prevCopyStatus,
+        [file.name]: false,
+      }));
+    }, 3000);
+  };
+  // delete file disini
 
   return (
     <div>
@@ -159,12 +173,10 @@ function App() {
           {/* Announcement Banner */}
           <div className="flex justify-center">
             <div className="inline-flex items-center gap-x-2 bg-white border border-gray-200 text-xs text-gray-600 p-2 px-3 rounded-full transition hover:border-gray-300 dark:bg-gray-800 dark:border-gray-700 dark:hover:border-gray-600 dark:text-gray-400">
-              {generatedRoomNumber
-                ? 'Your Current Room Is'
-                : 'Move Your Files Easly'}
+              {roomNumber ? 'Your Current Room Is' : 'Move Your Files Easly'}
               <span className="flex items-center gap-x-1">
                 <span className="border-l border-gray-200 text-blue-600 pl-2 dark:text-blue-500">
-                  {generatedRoomNumber ? `${generatedRoomNumber}` : 'Fast 🚀'}
+                  {roomNumber ? `${roomNumber}` : 'Fast 🚀'}
                 </span>
               </span>
             </div>
@@ -259,54 +271,7 @@ function App() {
               }
               onprocessfile={() => handleFileUpload()}
             />
-
-            {/* Short Link Form */}
           </div>
-          {/* <div className="flex gap-3 w-full flex-wrap justify-center mx-auto mt-8"> */}
-          {/* input link utama */}
-          {/* <form className="w-full  md:w-5/12 lg:w-3/12">
-              <div className="relative z-10 flex space-x-2 p-2  bg-white border rounded-lg shadow-lg shadow-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:shadow-gray-900/[.2]">
-                <div className="flex-[1_0_0%]">
-                  <label className="block text-sm text-gray-700 font-medium dark:text-white">
-                    <span className="sr-only">Short link</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="hs-search-article-1"
-                    id="hs-search-article-1"
-                    className="p-2 block w-full border-none focus:outline-none rounded-md ring-3  dark:text-gray-400"
-                    placeholder="Link utama"
-                  />
-                </div>
-              </div>
-            </form> */}
-
-          {/* input short link */}
-          {/* <div className="w-full  md:w-5/12 lg:w-3/12">
-              <div className="relative z-10 flex space-x-2 p-2 justify-between  bg-white border rounded-lg shadow-lg shadow-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:shadow-gray-900/[.2]">
-                <div className="flex items-center">
-                  <p className="p-2 pr-0 text-slate-500 font-semibold">
-                    op.com/
-                  </p>
-                  <input
-                    type="text"
-                    name="hs-search-article-1"
-                    id="hs-search-article-1"
-                    className="p-2 block w-full pl-0 border-none focus:outline-none rounded-md ring-3  dark:text-gray-400"
-                    placeholder="Short link"
-                  />
-                </div>
-                <div className="self-end">
-                  <a
-                    className="p-2 inline-flex justify-center items-center gap-2 rounded-md border border-transparent font-semibold bg-blue-500 text-white hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all text-sm dark:focus:ring-offset-gray-800"
-                    href="#"
-                  >
-                    Shorten
-                  </a>
-                </div>
-              </div>
-            </div>
-          </div> */}
 
           {/* End Buttons */}
         </div>
@@ -342,14 +307,14 @@ function App() {
               whileTap={{ scale: 0.9, transition: { duration: 0.1 } }}
               key={index}
               className="group flex flex-col bg-white border shadow-sm rounded-xl hover:shadow-md transition dark:bg-slate-900 dark:border-gray-800"
-              onClick={() => handleCopyLink(file)}
+              onClick={() => handleDownload(file)}
             >
               <div className="p-4 md:p-5">
                 <div className="flex items-start">
                   {copyStatus[file.name] ? (
                     <>
                       <div className="relative">
-                        <HiOutlineClipboardCheck
+                        <BsCloudCheckFill
                           size={20}
                           className="mt-1 text-green-500"
                         />
@@ -358,16 +323,16 @@ function App() {
                           animate={{ opacity: 1, y: -5, scale: 1.2 }}
                           className="ml-2 px-2 py-1 rounded-md -top-5 -left-5 text-white bg-green-500 shadow-md absolute text-xs "
                         >
-                          Copied
+                          Downloading...
                         </motion.div>
                       </div>
                     </>
                   ) : (
-                    <HiOutlineClipboard size={20} className="mt-1" />
+                    <BsCloudArrowDown size={20} className="mt-1" />
                   )}
 
                   <div className="grow ml-5">
-                    <h3 className="group-hover:text-blue-600 font-semibold text-gray-800 dark:group-hover:text-gray-400 dark:text-gray-200">
+                    <h3 className="group-hover:text-blue-600 text-sm font-semibold text-gray-800 dark:group-hover:text-gray-400 dark:text-gray-200">
                       {file.name}
                     </h3>
                     <p className="text-sm text-gray-500">
