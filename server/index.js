@@ -161,8 +161,8 @@ app.delete('/deleteRoom/:roomNumber', (req, res) => {
     }
   });
 });
-
-const SIX_HOURS = 6 * 60 * 60 * 1000;
+// auto delete 3 jam
+const THREE_HOURS = 3 * 60 * 60 * 1000;
 
 const scheduleFolderDeletion = (roomNumber) => {
   setTimeout(() => {
@@ -174,7 +174,7 @@ const scheduleFolderDeletion = (roomNumber) => {
         console.log('Room folder deleted:', folderPath);
       }
     });
-  }, SIX_HOURS);
+  }, THREE_HOURS);
 };
 
 const PORT = 5000;
