@@ -1,6 +1,10 @@
 import { motion } from 'framer-motion';
 
 function Modal({ onClose, roomNumber, onAccept }) {
+  const handleAccept = () => {
+    onAccept();
+    redirectAfterAccept();
+  };
   return (
     <div className={`fixed inset-0 flex items-center justify-center z-50`}>
       <motion.div

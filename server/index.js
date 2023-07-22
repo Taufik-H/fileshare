@@ -4,8 +4,13 @@ const cors = require('cors');
 const archiver = require('archiver');
 const path = require('path');
 const fs = require('fs');
+const http = require('http');
 
 const app = express();
+const server = http.createServer(app);
+
+app.use(cors());
+
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     const roomNumber = req.params.roomNumber;
@@ -15,14 +20,12 @@ const storage = multer.diskStorage({
   },
   filename: (req, file, cb) => {
     const originalName = file.originalname;
-    const modifiedName = originalName.toLowerCase().replaceAll(' ', '_');
+    const modifiedName = originalName.toLowerCase().replace(/ /g, '_');
     cb(null, modifiedName);
   },
 });
-const upload = multer({ storage });
 
-app.use(cors());
-app.use(express.static('public'));
+const upload = multer({ storage });
 
 app.post('/createRoom/:roomNumber', (req, res) => {
   const roomNumber = req.params.roomNumber;
@@ -40,16 +43,14 @@ app.post('/uploads/:roomNumber', upload.array('files'), (req, res) => {
   const roomNumber = req.params.roomNumber;
   const files = req.files.map((file) => {
     const originalName = file.originalname;
-    const modifiedName = originalName.toLowerCase().replaceAll(' ', '_');
+    const modifiedName = originalName.toLowerCase().replace(/ /g, '_');
     return {
       name: modifiedName,
       size: file.size,
-      type: path
-        .extname(file.originalname)
-        .toLocaleLowerCase()
-        .replace('.', ''),
+      type: path.extname(file.originalname).toLowerCase().replace('.', ''),
     };
   });
+
   res.status(200).json({ files: files });
   scheduleFolderDeletion(roomNumber);
 });
@@ -97,7 +98,6 @@ app.get('/downloadAll/:roomNumber', (req, res) => {
   const roomNumber = req.params.roomNumber;
   const folderPath = path.join(__dirname, 'uploads', roomNumber);
 
-  // Check if the folder exists
   const folderExists = fs.existsSync(folderPath);
   if (!folderExists) {
     return res.status(404).json({ error: 'Folder not found' });
@@ -112,7 +112,7 @@ app.get('/downloadAll/:roomNumber', (req, res) => {
 
   const output = fs.createWriteStream(zipPath);
   const archive = archiver('zip', {
-    zlib: { level: 9 }, // set compression level
+    zlib: { level: 9 },
   });
 
   archive.on('warning', (err) => {
@@ -124,13 +124,8 @@ app.get('/downloadAll/:roomNumber', (req, res) => {
     res.status(500).json({ error: 'Failed to create zip file' });
   });
 
-  // Pipe archive data to the output file
   archive.pipe(output);
-
-  // Add all files in the folder to the archive
   archive.directory(folderPath, false);
-
-  // Finalize the archive and close the output stream
   archive.finalize();
 
   output.on('close', () => {
@@ -140,7 +135,6 @@ app.get('/downloadAll/:roomNumber', (req, res) => {
         console.error('Error downloading zip file:', err);
         res.status(500).json({ error: 'Failed to download zip file' });
       } else {
-        // Cleanup: remove the generated zip file
         fs.unlink(zipPath, (err) => {
           if (err) {
             console.warn('Failed to remove zip file:', err);
@@ -153,7 +147,6 @@ app.get('/downloadAll/:roomNumber', (req, res) => {
   });
 });
 
-// New route to handle automatic deletion after 6 hours
 app.delete('/deleteRoom/:roomNumber', (req, res) => {
   const roomNumber = req.params.roomNumber;
   const folderPath = path.join(__dirname, 'uploads', roomNumber);
@@ -169,9 +162,8 @@ app.delete('/deleteRoom/:roomNumber', (req, res) => {
   });
 });
 
-const SIX_HOURS = 6 * 60 * 60 * 1000; // 6 hours in milliseconds
+const SIX_HOURS = 6 * 60 * 60 * 1000;
 
-// Function to delete room folder after 6 hours
 const scheduleFolderDeletion = (roomNumber) => {
   setTimeout(() => {
     const folderPath = path.join(__dirname, 'uploads', roomNumber);
@@ -184,7 +176,8 @@ const scheduleFolderDeletion = (roomNumber) => {
     });
   }, SIX_HOURS);
 };
+
 const PORT = 5000;
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
+server.listen(PORT, () => {
+  console.log(`Server listening on port ${PORT}`);
 });

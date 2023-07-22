@@ -6,12 +6,7 @@ import FilePondPluginImagePreview from 'filepond-plugin-image-preview';
 import 'filepond-plugin-image-preview/dist/filepond-plugin-image-preview.css';
 import { motion } from 'framer-motion';
 import { HiFolderDownload } from 'react-icons/hi';
-import {
-  BsCloudArrowDown,
-  BsCloudCheckFill,
-  BsCheckCircle,
-  BsXCircle,
-} from 'react-icons/bs';
+import { BsCloudArrowDown, BsCloudCheckFill } from 'react-icons/bs';
 import { FcHome } from 'react-icons/fc';
 import Modal from './components/Modal';
 import JoinRoom from './components/JoinRoom';
@@ -26,11 +21,10 @@ function App() {
   const [generatedRoomNumber, setGeneratedRoomNumber] = useState('');
   const [roomNumber, setRoomNumber] = useState('');
   const [joinRoomOpen, setJoinRoomOpen] = useState(false);
-  const [downloadAllText, setsetDownloadAllText] = useState('Download All');
-  const [deletingFile, setDeletingFile] = useState(null);
+  const [downloadAllText, setDownloadAllText] = useState('Download All');
 
-  // console.log('room number:' + roomNumber);
-  // console.log('generated number' + generatedRoomNumber);
+  const broadcastChannelRef = useRef(null);
+
   const handleShowModal = () => {
     const generatedNumber = Math.floor(
       10000 + Math.random() * 90000
@@ -38,6 +32,7 @@ function App() {
     setGeneratedRoomNumber(generatedNumber);
     setShowModal(true);
   };
+
   const handleCreateRoom = async () => {
     const roomcode = generatedRoomNumber;
     setShowModal(!showModal);
@@ -46,13 +41,14 @@ function App() {
         `http://localhost:5000/createRoom/${roomcode}`,
         {
           method: 'POST',
+          mode: 'cors',
         }
       );
       const data = await response.json();
 
       if (response.ok) {
         if (data.message === 'Room and folder created successfully') {
-          console.log('Room created:', roomcode);
+          // console.log('Room created:', roomcode);
           setRoomNumber(roomcode);
         } else if (data.error === 'Room already exists') {
           console.log('Room already exists:', roomcode);
@@ -65,11 +61,13 @@ function App() {
     }
   };
 
-  //join room
   const handleJoinRoom = async (roomNumber) => {
     try {
       const response = await fetch(
-        `http://localhost:5000/getUploadedFiles/${roomNumber}`
+        `http://localhost:5000/getUploadedFiles/${roomNumber}`,
+        {
+          mode: 'cors',
+        }
       );
       if (response.ok) {
         const data = await response.json();
@@ -93,11 +91,18 @@ function App() {
     setFiles([]);
     try {
       const response = await fetch(
-        `http://localhost:5000/getUploadedFiles/${roomNumber}`
+        `http://localhost:5000/getUploadedFiles/${roomNumber}`,
+        {
+          mode: 'cors',
+        }
       );
       if (response.ok) {
         const data = await response.json();
         setUploadedFiles(data.files);
+        if ('BroadcastChannel' in window) {
+          const channel = new BroadcastChannel('fileUploadChannel');
+          channel.postMessage({ roomNumber, files: data.files });
+        }
       } else {
         console.error('Error fetching uploaded files:', response.statusText);
       }
@@ -110,7 +115,7 @@ function App() {
 
   const handleDownloadAll = () => {
     const downloadLink = `http://localhost:5000/downloadAll/${generatedRoomNumber}`;
-    setsetDownloadAllText('Downloading...');
+    setDownloadAllText('Downloading...');
 
     const downloadAllLink = document.createElement('a');
     downloadAllLink.href = downloadLink;
@@ -122,7 +127,7 @@ function App() {
     document.body.removeChild(downloadAllLink);
 
     setTimeout(() => {
-      setsetDownloadAllText('Download All');
+      setDownloadAllText('Download All');
     }, 3000);
   };
 
@@ -149,8 +154,6 @@ function App() {
       }));
     }, 3000);
   };
-  // delete file disini
-
   return (
     <div>
       {/* Hero */}
@@ -214,7 +217,7 @@ function App() {
 
             {/* Join Room Button */}
             <button
-              className={`px-6 py-4 mt-4 bg-slate-300 rounded-md  font-medium text-gray-800 hover:bg-gray-800 hover:text-white focus:outline-none focus:ring-2 focus:ring-gray-800 focus:ring-offset-2 transition-all text-sm dark:text-white dark:hover:bg-gray-800 dark:hover:border-gray-900 dark:focus:ring-gray-900 dark:focus:ring-offset-gray-800 ${
+              className={`px-6 py-4 mt-4 bg-slate-300 rounded-md  font-medium text-gray-800 hover:bg-gray-800 hover:text-white focus:outline-none focus:ring-2 focus:ring-gray-800 focus:ring-offset-2 focus:ring-offset-white transition-all text-sm dark:text-white dark:hover:bg-gray-800 dark:hover:border-gray-900 dark:focus:ring-gray-900 dark:focus:ring-offset-gray-800 ${
                 roomNumber && 'hidden'
               }`}
               onClick={() => setJoinRoomOpen(!joinRoomOpen)}
